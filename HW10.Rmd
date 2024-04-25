@@ -1,0 +1,179 @@
+---
+title: "Homework 10"
+author: "Arjun Yenamandra - SDS 315 UT Austin"
+
+
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(fig.height=4, fig.width=7, warning=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60), warning = FALSE, message = FALSE)
+```
+eid: ay7654
+github: [https://github.com/macksed/HW10](https://github.com/macksed/HW10)
+```{r, echo=FALSE, results='hide'}
+library(tidyverse)
+library(ggplot2)
+library(mosaic)
+```
+
+# **Question 1**
+```{r, echo=FALSE, results='hide'}
+red <- read.csv("redlining.csv")
+summary(red)
+sum(is.na(red))
+
+
+```
+
+The question is: Is there an association between the racial composition of a ZIP code and number of FAIR policies issued, after adjusting for vars like fire risk, age , and median income?
+
+
+```{r, echo=FALSE, results='hide'}
+pairs(~policies + minority + fire + age + income, data = red)
+
+```
+
+
+
+Here's just some basic associations.
+
+```{r, echo=FALSE, results='hide'}
+model <- lm(policies ~ minority + fire + age + income, data = red)
+summary(model)
+plot(model$residuals ~ fitted(model))
+
+```
+
+
+
+
+Approach: To address such, I am going to use a linear regression model, and then adjust for the previously mentioned variables as intended. We can view the residuals against the fitted model here.
+
+
+
+```{r, echo=FALSE}
+coef(summary(model))
+confint(model, level=0.95)
+```
+Results: Viewing this confidence interval and summary of our model, we have a few analyses to make. 
+The range in minority suggests that as the percentage of minority residents increases, a corresponding increase in FAIR policies follows. This same idea holds true for fire, suggesting that number of fires per 100 units causes more FAIR policies. However, the opposite is true for age and income, as they both include 0 in their interval.
+
+Conclusion: We can conclude that there is a correlation among minority status and number of fair policies, but that fire could also be an interfering variable in the percentage increase of FAIR policy in the area. We found that age and income had little effect/non-statistically significant effect, even when adjusted for.
+
+
+# **Question 2**
+```{r, echo=FALSE, results='hide'}
+groc <- read.csv("groceries.csv")
+averagep <- groc %>%
+  group_by(Store) %>%
+  summarize(Average_Price = mean(Price, na.rm = TRUE))
+```
+
+### **A**
+
+
+```{r, echo=FALSE, results='hide'}
+ggplot(averagep, aes(x = reorder(Store, Average_Price), y = Average_Price)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(x = "Store", y = "Average Price", title = "Average product Price per Store")
+```
+
+
+This plot shows us that Whole Foods has the highest average price per store, while Fiesta is the lowest average price per store.
+
+
+### **B**
+```{r, echo=FALSE, results='hide'}
+producta <- groc %>%
+  group_by(Product) %>%
+  summarize(Stores_Count = n_distinct(Store))
+ggplot(producta, aes(x = reorder(Product, Stores_Count), y = Stores_Count)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(x = "Product", y = "Number of Stores", title = "Num. of Stores Selling Product")
+
+```
+
+
+
+Salt, Milk, and Eggs seem to be in the most stores, while Cinnamon toast crunch is sold in the least amount of stores.
+
+### **C**
+```{r, echo=FALSE, results='hide'}
+model2 <- lm(Price ~ Product + Type, data = groc)
+confint(model2)
+```
+Compared with ordinary grocery stores, convenience stores charge somewhere between 0.413 to .9154 more for the same product.
+
+
+### **D**
+```{r, echo=FALSE, results='hide'}
+groc$Store <- relevel(as.factor(groc$Store), ref = "Central Market")
+store <- lm(Price ~ Product + as.factor(Store), data = groc)
+confint(store)
+
+
+```
+Whole Foods and Walgreens seem to charge the highest for the same product, as indicated by the confidence interval, while Walmart and Kroger Fresh fare seem to charge the least.
+
+
+### **E**
+Central market charges a similar amount. The confidence interval for the coef/weight for H-E-B when treating Central market as the basis is -.39 to .25. At best HEB is slightly less than central market, and at worse it is slightly more. This interval, also including 0, allows us to make the inference that the two stores are priced similarly. Not many other stores contain confints that contain 0, and are of similar range. The closest is fiesta, but it's lower bound falls much further than HEB.
+
+### **F**
+
+```{r, echo=FALSE, results='hide'}
+groc$Income10k <- groc$Income / 10000
+
+incomem <- lm(Price ~ Product + Income10k, data = groc)
+summary(incomem)
+
+confint(incomem)
+
+standardized <- groc %>%
+  mutate(across(c(Price, Income10k), scale)) 
+mstandardized <- lm(Price ~ Product + Income10k, data = standardized)
+summary(mstandardized)
+
+
+
+```
+As the coefficient is small and negative, it seems that poorer ZIP codes will pay slightly mroe for the same product on average. As income increases, the cost of goods also seems to dip.
+
+Through a standardized model, we find that Income10k has a coefficient of  -0.031597, meaning that is how many St. Devs the price will change for 1 st. dev change in income variable. 
+
+
+
+
+
+```{r, echo=FALSE, results='hide'}
+
+
+
+```
+
+
+```{r, echo=FALSE, results='hide'}
+
+
+
+```
+
+
+```{r, echo=FALSE, results='hide'}
+
+
+
+```
+
+
+```{r, echo=FALSE, results='hide'}
+
+
+
+```
